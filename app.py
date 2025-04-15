@@ -32,16 +32,9 @@ def load_config():
 # Load config when script runs
 load_config()
 
-# ✅ Retrieve API Keys
-PEXELS_API_KEY = os.getenv("PEXELS_API_KEY")
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "C:/Users/Ananta Verma/work/My projects/AI Travel Agent/.venv/backend/Modules/tts_key.json"
-RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY")
-RAPIDAPI_HOST = os.getenv("RAPIDAPI_HOST ")
-PEXELS_API_URL = "https://api.pexels.com/v1/search"
+#Retrieve API Keys
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "path_to_your_tts.json"
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-RUNWAY_API_KEY = os.getenv("RUNWAY_API_KEY")
-RUNWAY_URL = "https://api.dev.runwayml.com/v1/image_to_video"
-RUNWAY_VERSION = "2024-11-06"
 LUMA_API_KEY = os.getenv("LUMA_API_KEY")
 
 # ✅ Initialize Flask App
@@ -57,13 +50,13 @@ image_agent = Agent(
     description="AI agent for generating travel images.",
 )
 
-# 📌 Serve Frontend
+# Serve Frontend
 @app.route('/')
 def index():
     return render_template('index.html')
 
 
-# 📌 Generate AI Itinerary using Ollama
+# Generate AI Itinerary using Ollama
 @app.route('/generate_itinerary', methods=['POST'])
 def generate_itinerary():
     data = request.json
@@ -141,7 +134,7 @@ def generate_video():
             "and relaxing vibes."
         )
 
-        # ✅ Pass your auth token directly (RECOMMENDED)
+        # Pass your auth token directly 
         client = LumaAI(auth_token=os.getenv("LUMA_API_KEY"))
 
         generation = client.generations.create(prompt=prompt)
@@ -165,7 +158,7 @@ def generate_video():
 
 
 
-# 📌 Generate AI Voiceover for the Itinerary
+# Generate AI Voiceover for the Itinerary
 @app.route('/generate_voiceover', methods=['POST'])
 def generate_voiceover():
     data = request.json
@@ -193,7 +186,7 @@ def generate_voiceover():
 
         print(f"✅ Voiceover saved at: {audio_file}")
 
-        # ✅ Return direct path to the file (avoiding Flask's `/play_voiceover`)
+        # Return direct path to the file (avoiding Flask's `/play_voiceover`)
         return jsonify({"audio_url": f"/static/ai_voice.mp3"})
 
     except Exception as e:
@@ -202,7 +195,7 @@ def generate_voiceover():
 
 
 
-# 📌 Run Flask App
+# Run Flask App
 if __name__ == '__main__':
     app.run(debug=True)
 
