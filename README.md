@@ -32,7 +32,7 @@ An interactive AI-powered travel planning assistant that generates personalized 
 AI-Travel-Agent/
 │
 ├── app.py                 # Flask backend
-├── config.txt             # API keys and config (keep private!)
+├── config.txt             # API keys and config
 ├── load_config.py         # Environment loader
 │
 ├── templates/
