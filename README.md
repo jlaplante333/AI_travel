@@ -12,7 +12,7 @@ An interactive AI-powered travel planning assistant that generates personalized 
 - 🗺️ **AI Itinerary Generator** – Custom travel plans using LLaMA 3 via Ollama.
 - 🔊 **Voiceover Creation** – Google TTS for immersive travel narration.
 - 🖼️ **Image Generation** – Beautiful visuals using DALL·E-style image tools.
-- 🎞️ **Video Generator** – Generate short cinematic travel videos using RunwayML.
+- 🎞️ **Video Generator** – Generate short cinematic travel videos using LumaAI.
 - 🤖 **Chat Agent Ready** – Easily extendable with LangChain Agents for booking, weather, etc.
 
 ---
