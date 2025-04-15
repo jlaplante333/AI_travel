@@ -1,0 +1,179 @@
+/* ================== General Page Styling ================== */
+body {
+    background-color: #f6ede7; /* Pastel beige */
+    font-family: 'Playfair Display', serif;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+}
+
+/* ================== Hero Section ================== */
+.hero {
+    background: url('/static/pexels-quang-nguyen-vinh-222549-2178175.jpg') center/cover no-repeat;
+    height: 45vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.hero-title {
+    font-size: 4rem;
+    color: white;
+}
+
+/* ================== Search Section ================== */
+.search-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.search-wrapper {
+    display: flex;
+    align-items: center;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 30px;
+    padding: 5px 10px;
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.search-box {
+    border: none;
+    padding: 10px;
+    font-size: 1rem;
+    outline: none;
+    width: 250px;
+    border-radius: 20px;
+}
+
+.search-button {
+    background: #fff;
+    border: none;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 1rem;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+}
+
+.search-button:hover {
+    background: #eee;
+}
+
+.airplane-icon {
+    margin-left: 5px;
+}
+
+/* ================== AI-Generated Content ================== */
+.container {
+    margin-top: -50px;
+    padding: 20px;
+}
+
+/* ======= Itinerary Styling ======= */
+.itinerary-box {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    margin: 20px auto;
+    width: 85%;
+    max-width: 1000px;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
+    text-align: left;
+}
+
+.itinerary-content {
+    font-size: 1.2rem;
+    line-height: 1.8;
+    color: #333;
+    padding: 15px;
+}
+
+/* Headings inside Itinerary */
+.itinerary-box h2 {
+    font-size: 2rem;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+/* Make the headings inside itinerary bold and clear */
+.itinerary-box strong {
+    font-size: 1.4rem;
+    color: #d35400;
+}
+
+/* List inside Itinerary */
+.itinerary-content ul {
+    list-style: none;
+    padding: 0;
+}
+
+.itinerary-content li {
+    font-size: 1.1rem;
+    margin: 10px 0;
+}
+
+/* Remove asterisks in the itinerary text */
+.itinerary-content p {
+    margin: 10px 0;
+}
+
+/* ================== Image & Video Styling ================== */
+.image-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+    padding: 20px;
+}
+
+.image-container img {
+    width: 30%; /* Adjust size */
+    max-width: 265px; /* Prevent overly large images */
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease-in-out;
+}
+
+.image-container img:hover {
+    transform: scale(1.05);
+}
+
+.result-box {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    margin: 20px auto;
+    width: 85%;
+    max-width: 1000px;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.result-image, .result-video {
+    border-radius: 15px;
+    width: 100%;
+    height: auto;
+}
+
+/* ================== Voiceover Button ================== */
+.voiceover-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.8rem;
+    transition: transform 0.2s ease, box-shadow 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Glow effect on hover */
+.voiceover-button:hover {
+    transform: scale(1.1);
+    box-shadow: 0px 0px 10px rgba(255, 123, 84, 0.5);
+}

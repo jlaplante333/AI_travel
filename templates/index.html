@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Travel Agent</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+
+    <!-- Hero Section -->
+    <div class="hero">
+        <div class="hero-overlay"></div>
+        <h1 class="hero-title">AI Travel Agent</h1>
+    </div>
+
+    <!-- Search Section -->
+    <div class="search-container">
+        <div class="search-wrapper">
+            <input type="text" id="tripInput" class="search-box" placeholder="Plan your dream trip...">
+            <button id="planTripBtn" class="search-button">
+                Go <span class="airplane-icon">✈️</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <div class="container text-center mt-5">
+
+        <!-- AI-Generated Itinerary -->
+        <div class="itinerary-container">
+            <h2 class="itinerary-title">
+                Trip Itinerary
+                <button id="playAudio" style="
+                    background: none;
+                    border: none;
+                    font-size: 24px;
+                    cursor: pointer;
+                    transition: 0.3s;
+                    border-radius: 50%;
+                    padding: 5px;
+                    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0);
+                ">
+                    🔊
+                </button>
+            </h2>
+            <div class="itinerary-box">
+                <p id="itineraryText">No itinerary generated yet.</p>
+            </div>
+        </div>
+
+        <audio id="aiAudio">
+            <source id="audioSource" src="" type="audio/mpeg">
+        </audio>
+
+        <!-- AI-Generated Images -->
+        <div class="result-box">
+            <h2> Destination Pictures </h2>
+            <div class="image-container" id="imageGallery">
+                <!-- Images will be inserted dynamically here -->
+        </div>
+    </div>
+
+        <!-- AI-Generated Video -->
+        <div class="result-box">
+            <h2> Destination Video</h2>
+            <div id="videoContainer"></div> <!-- AI Video Will Appear Here -->
+            <video id="aiVideo" controls class="img-fluid result-video">
+                <source id="videoSource" src="" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        </div>
+
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+    // Function to toggle voiceover playback
+    function toggleVoiceover() {
+        let audioElement = document.getElementById("aiAudio");
+        let playButton = document.getElementById("playAudio");
+
+        if (!audioElement.src || audioElement.src.includes("undefined") || !audioElement.src.includes("static/ai_voice.mp3")) {
+            alert("No audio available yet!");
+            return;
+        }
+
+        if (audioElement.paused) {
+            audioElement.play()
+                .then(() => {
+                    playButton.innerText = "⏸️";  // Change to pause icon
+                })
+                .catch(error => console.log("Playback error:", error));
+        } else {
+            audioElement.pause();
+            playButton.innerText = "🔊";  // Change back to play icon
+        }
+    }
+
+    // Ensure the button always works
+    document.getElementById("playAudio").addEventListener("click", toggleVoiceover);
+
+    document.getElementById("planTripBtn").addEventListener("click", function () {
+    let userPrompt = document.getElementById("tripInput").value;
+
+    if (!userPrompt) {
+        alert("Please enter your trip details.");
+        return;
+    }
+
+    // ✅ Fetch AI Itinerary First
+       fetch('/generate_itinerary', {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({ prompt: userPrompt })
+       })
+       .then(response => response.json())
+       .then(data => {
+           let itineraryText = data.itinerary;
+
+
+           // ✅ Remove asterisks from the displayed text
+           itineraryText = itineraryText.replace(/\*/g, '');
+
+
+           // ✅ Make section headings bold
+           itineraryText = itineraryText.replace(/(Day \d+)/g, "<strong>$1</strong>");
+
+
+           // ✅ Ensure proper paragraph formatting
+           itineraryText = itineraryText.split("\n").map(paragraph => `<p>${paragraph.trim()}</p>`).join("");
+
+
+           document.getElementById("itineraryText").innerHTML = itineraryText;
+
+
+           // ✅ Generate Voiceover (Send clean text without HTML tags)
+           let cleanItineraryText = itineraryText.replace(/<\/?[^>]+(>|$)/g, ""); // Remove HTML tags for voiceover
+
+
+           return fetch('/generate_voiceover', {
+               method: 'POST',
+               headers: { 'Content-Type': 'application/json' },
+               body: JSON.stringify({ text: cleanItineraryText }) // Send clean text
+           });
+       })
+       .then(response => response.json())
+       .then(data => {
+           let audioElement = document.getElementById("aiAudio");
+
+
+           if (data.audio_url) {
+               let newAudio = new Audio(data.audio_url);
+               newAudio.onloadeddata = () => {
+                   audioElement.src = data.audio_url;
+                   audioElement.load();
+               };
+           }
+       });
+
+
+    // ✅ Fetch AI Images
+    fetch('/generate_images', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ location: userPrompt })
+    })
+    .then(response => response.json())
+    .then(data => {
+        let imageGallery = document.getElementById("imageGallery");
+        imageGallery.innerHTML = ""; // Clear previous images
+        let imagesToShow = data.image_urls.slice(-6); // ✅ Show only last 6 images
+        imagesToShow.forEach(url => {
+            let img = document.createElement("img");
+            img.src = url;
+            img.classList.add("ai-image");
+            imageGallery.appendChild(img);
+        });
+    });
+
+    // ✅ Fetch AI Video using Luma AI
+    fetch('/generate_video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: userPrompt })  // Use trip input as prompt
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log("📽️ Luma API Video Response:", data); // Debug output
+
+        let videoContainer = document.getElementById("videoContainer");
+        let videoElement = document.getElementById("aiVideo");
+        let videoSource = document.getElementById("videoSource");
+
+        if (data.video_url) {
+            videoSource.src = data.video_url;
+            videoElement.load(); // Refresh the video element
+            videoContainer.style.display = "block"; // Make sure it's visible
+        } else {
+            alert("❌ Failed to generate video from Luma AI.");
+        }
+    });
+
+});
+
+    </script>
+
+</body>
+</html>
