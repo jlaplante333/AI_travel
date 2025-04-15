@@ -44,78 +44,98 @@ AI-Travel-Agent/
 │
 └── README.md              # You're here!
 
-🚀 Getting Started
-✅ Prerequisites
-Python 3.9+
 
-Git
+---
 
-A modern browser
+## 🚀 Getting Started
 
-📦 Installation
-Clone the repository:
+### ✅ Prerequisites
 
-bash
-Copy
-Edit
-git clone https://github.com/Anantaverma20/AI-Travel-Agent.git
-cd AI-Travel-Agent
-Create a virtual environment (optional but recommended):
+- Python 3.9+
+- Git
+- A modern browser
 
-bash
-Copy
-Edit
-python -m venv .venv
-.venv\Scripts\activate   # Windows
-source .venv/bin/activate  # macOS/Linux
-Install dependencies:
+### 📦 Installation
 
-bash
-Copy
-Edit
-pip install -r requirements.txt
-Set up API Keys:
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/Anantaverma20/AI-Travel-Agent.git
+   cd AI-Travel-Agent
+   ```
 
-Edit config.txt with your keys:
+2. **Create a virtual environment** (optional but recommended):
+   ```bash
+   python -m venv .venv
+   .venv\Scripts\activate   # Windows
+   source .venv/bin/activate  # macOS/Linux
+   ```
 
-makefile
-Copy
-Edit
-GOOGLE_TTS_KEY=
-OLLAMA_MODEL=llama3
-OPENAI_API_KEY=
-RUNWAY_API_KEY=
-LUMA_API_KEY=
-GEMINI_API_KEY=
-Run the app:
+3. **Install dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-bash
-Copy
-Edit
-python app.py
-The app will launch on http://127.0.0.1:5000/
+4. **Set up API Keys**:
+   - Edit `config.txt` with your keys:
+     ```
+     GOOGLE_TTS_KEY=
+     OLLAMA_MODEL=llama3
+     OPENAI_API_KEY=
+     RUNWAY_API_KEY=
+     LUMA_API_KEY=
+     GEMINI_API_KEY=
+     ```
 
-🖼️ Screenshots
-📍 Home & Prompt Input
+5. **Run the app**:
+   ```bash
+   python app.py
+   ```
+   The app will launch on `http://127.0.0.1:5000/`
 
-🗺️ AI Itinerary Output + Voice
+---
 
-📌 Future Improvements
- Integrate chatbot using LangChain or Gemini
+## 🖼️ Screenshots
 
- Enable real hotel/flight searches via Amadeus or Skyscanner APIs
+### 📍 Home & Prompt Input
+![Search Prompt](static/screenshots/hero.png)
 
- Offline itinerary downloads (PDF + video)
+### 🗺️ AI Itinerary Output + Voice
+![Itinerary + Voice](static/screenshots/itinerary_voice.png)
 
- User login to save past trips
+---
 
-🤝 Contribution Guide
-Fork the repo
+## 📌 Future Improvements
 
-Create your feature branch (git checkout -b feature/your-feature)
+- [ ] Integrate chatbot using LangChain or Gemini
+- [ ] Enable real hotel/flight searches via Amadeus or Skyscanner APIs
+- [ ] Offline itinerary downloads (PDF + video)
+- [ ] User login to save past trips
 
-Commit your changes (git commit -m 'Add new feature')
+---
 
-Push to the branch (git push origin feature/your-feature)
+## 🤝 Contribution Guide
 
-Open a Pull Request!
+1. Fork the repo
+2. Create your feature branch (`git checkout -b feature/your-feature`)
+3. Commit your changes (`git commit -m 'Add new feature'`)
+4. Push to the branch (`git push origin feature/your-feature`)
+5. Open a Pull Request!
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+---
+
+## 👤 Author
+
+- **Ananta Verma**
+- [LinkedIn](https://www.linkedin.com/in/ananta-verma)
+- [Portfolio](https://your-portfolio-link.com)
+
+---
+```
+
+
