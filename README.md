@@ -1,6 +1,6 @@
 # 🌍 AI Travel Agent
 
-An interactive AI-powered travel planning assistant that generates personalized itineraries, AI voiceovers, destination images, and cinematic videos with music — all from a single prompt.
+An interactive AI-powered travel planning assistant that generates personalized itineraries, AI voiceovers, destination images, and cinematic videos — all from a single prompt.
 
 ![Screenshot 2025-02-16 161217](https://github.com/user-attachments/assets/8575e242-3413-446d-b74d-74c2ea75ba37)
 
@@ -21,8 +21,8 @@ An interactive AI-powered travel planning assistant that generates personalized 
 
 - **Frontend**: HTML, CSS (Bootstrap, custom styles)
 - **Backend**: Python + Flask
-- **AI Tools**: Ollama, OpenAI GPT-4o, RunwayML, Gemini API, Google TTS
-- **Media APIs**: Pexels (for visuals), RapidAPI (video extension), Google Cloud
+- **AI Tools**: Ollama, OpenAI GPT-4o, Google TTS
+- **Media APIs**: LumaAI API for videos, OpenAI DALL-E API for images, Google Cloud
 
 ---
 
