@@ -43,9 +43,7 @@ AI-Travel-Agent/
 │         
 │
 └── README.md              # You're here!
-
-
----
+```
 
 ## 🚀 Getting Started
 
@@ -81,9 +79,7 @@ AI-Travel-Agent/
      GOOGLE_TTS_KEY=
      OLLAMA_MODEL=llama3
      OPENAI_API_KEY=
-     RUNWAY_API_KEY=
      LUMA_API_KEY=
-     GEMINI_API_KEY=
      ```
 
 5. **Run the app**:
@@ -92,15 +88,6 @@ AI-Travel-Agent/
    ```
    The app will launch on `http://127.0.0.1:5000/`
 
----
-
-## 🖼️ Screenshots
-
-### 📍 Home & Prompt Input
-![Search Prompt](static/screenshots/hero.png)
-
-### 🗺️ AI Itinerary Output + Voice
-![Itinerary + Voice](static/screenshots/itinerary_voice.png)
 
 ---
 
@@ -108,7 +95,7 @@ AI-Travel-Agent/
 
 - [ ] Integrate chatbot using LangChain or Gemini
 - [ ] Enable real hotel/flight searches via Amadeus or Skyscanner APIs
-- [ ] Offline itinerary downloads (PDF + video)
+- [ ] Offline itinerary downloads
 - [ ] User login to save past trips
 
 ---
@@ -121,11 +108,6 @@ AI-Travel-Agent/
 4. Push to the branch (`git push origin feature/your-feature`)
 5. Open a Pull Request!
 
----
-
-## 📄 License
-
-This project is licensed under the MIT License.
 
 ---
 
@@ -133,7 +115,7 @@ This project is licensed under the MIT License.
 
 - **Ananta Verma**
 - [LinkedIn](https://www.linkedin.com/in/ananta-verma)
-- [Portfolio](https://your-portfolio-link.com)
+- [Portfolio]([https://your-portfolio-link.com](https://anantas-portfolio-d0858a.webflow.io/))
 
 ---
 ```
