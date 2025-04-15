@@ -115,9 +115,6 @@ AI-Travel-Agent/
 
 - **Ananta Verma**
 - [LinkedIn](https://www.linkedin.com/in/ananta-verma)
-- [Portfolio]([https://your-portfolio-link.com](https://anantas-portfolio-d0858a.webflow.io/))
+- [Portfolio](https://anantas-portfolio-d0858a.webflow.io/)
 
 ---
-```
-
-
