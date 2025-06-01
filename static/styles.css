@@ -1,10 +1,15 @@
 /* ================== General Page Styling ================== */
 body {
-    background-color: #f6ede7; /* Pastel beige */
+    /* background-color: #f6ede7; */ /* Pastel beige - This will now be dynamic */
     font-family: 'Playfair Display', serif;
     margin: 0;
-    padding: 0;
+    /* padding: 0; Removed to allow more specific padding */
     text-align: center;
+    transition: background 0.5s ease-in-out; /* Smooth transition for dynamic background changes */
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh; /* Ensure body takes at least full viewport height */
+    /* padding-bottom: 20px; */ /* Let footer margin handle bottom spacing primarily */
 }
 
 /* ================== Hero Section ================== */
@@ -70,13 +75,25 @@ body {
 
 /* ================== AI-Generated Content ================== */
 .container {
-    margin-top: -50px;
+    /* margin-top: -50px; */ /* Removed this to simplify layout with dynamic backgrounds */
     padding: 20px;
+    background-color: rgba(255, 255, 255, 0.9); /* Semi-transparent white background */
+    border-radius: 10px; /* Optional: adds a bit of softness */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* Subtle shadow to lift the container */
+    position: relative; /* Ensure z-index works if body background is fixed */
+    z-index: 1;
+    width: 90%; /* Control overall width */
+    max-width: 1200px; /* Max width for larger screens */
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 20px; /* Add some space from the top */
+    margin-bottom: 30px; /* Space before the footer or bottom of page if footer is minimal */
+    /* flex-grow: 1; */ /* REMOVED: Let container size to content, don't force fill vertical space */
 }
 
 /* ======= Itinerary Styling ======= */
 .itinerary-box {
-    background: white;
+    background: white; /* Solid white background */
     padding: 20px;
     border-radius: 15px;
     margin: 20px auto;
@@ -84,6 +101,11 @@ body {
     max-width: 1000px;
     box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
     text-align: left;
+}
+
+/* Ensure itinerary text itself has a good default color */
+#itineraryText {
+    color: #333333; /* Dark gray for good readability on white */
 }
 
 .itinerary-content {
@@ -176,4 +198,95 @@ body {
 .voiceover-button:hover {
     transform: scale(1.1);
     box-shadow: 0px 0px 10px rgba(255, 123, 84, 0.5);
+}
+
+/* Footer specific styling if needed, assuming footer tag is used */
+footer {
+    padding-top: 20px;
+    padding-bottom: 20px; /* Added padding to footer itself for spacing */
+    width: 100%;
+    text-align: center; 
+    margin-top: auto; /* Pushes footer to bottom if body is flex and content is short */
+    /* background-color: rgba(0,0,0,0.05); */ /* Optional: slight footer background */
+}
+
+.ui-randomizer-container {
+    margin-bottom: 15px; /* Space between randomizer and copyright */
+    /* Add other styling if this container needs to be more prominent */
+}
+
+/* ================== Budget Widget Styling ================== */
+#budgetWidgetContainer {
+    background-color: #ffffff; /* White background for the widget area */
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Consistent shadow */
+    margin: 20px auto; /* Centering and spacing */
+    width: 85%;
+    max-width: 1000px; /* Consistent max-width */
+}
+
+/* Styling for Balanced Budget Flight Tracker */
+.budget-flight-tracker div {
+    border-bottom: 1px solid #eee;
+    padding: 10px 0;
+    margin-bottom: 10px;
+}
+
+.budget-flight-tracker div:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.budget-flight-tracker h4 {
+    margin-top: 0;
+    margin-bottom: 5px;
+    color: #007bff; /* A theme color, e.g., blue */
+}
+
+.budget-flight-tracker p {
+    margin: 3px 0;
+    font-size: 0.95rem;
+    color: #555;
+}
+
+/* Styling for Luxury Flight Table */
+.luxury-flight-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.luxury-flight-table caption {
+    font-size: 1.5rem;
+    font-weight: bold;
+    padding: 10px;
+    color: #8a6d3b; /* Gold-ish color for luxury */
+    caption-side: top;
+    text-align: left;
+}
+
+.luxury-flight-table th, .luxury-flight-table td {
+    border: 1px solid #ddd;
+    padding: 12px;
+    text-align: left;
+}
+
+.luxury-flight-table th {
+    background-color: #f2f2f2; /* Light grey header */
+    font-weight: bold;
+    color: #333;
+}
+
+.luxury-flight-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.luxury-flight-table tr:hover {
+    background-color: #f1f1f1; /* Hover effect */
+}
+
+.luxury-flight-table td:last-child {
+    font-weight: bold; /* Price typically bold */
+    color: #28a745; /* Green for price, perhaps */
 }

@@ -22,14 +22,12 @@ class LocationAgent:
         self.gmaps = googlemaps.Client(key=api_key)
 
     def extract_locations_from_itinerary(self, itinerary: str) -> List[Location]:
-        """Extract location names from the itinerary text."""
-        # Split into days and extract locations
+        print("LocationAgent: Starting to extract locations from itinerary text...")
         days = re.split(r'Day \d+:', itinerary)
         locations = []
         seen_locations = set()  # Track unique locations
         
         for day in days:
-            # Look for location patterns like "Visit X", "Explore X", "X is a", etc.
             location_patterns = [
                 r'(?:Visit|Explore|See|Tour|Stop by|Head to|Go to|Check out)\s+([^,.!?]+)',
                 r'(?:at|in)\s+([^,.!?]+(?:Museum|Park|Palace|Castle|Cathedral|Square|Market|Garden|Tower|Bridge|Center|Hall|Theater|Opera|Gallery|Zoo|Aquarium|Beach|Mountain|Lake|River|Valley|District|Quarter|Street|Avenue|Boulevard|Plaza|Stadium|Arena|Monument|Memorial|Statue|Temple|Church|Mosque|Synagogue|Shrine|Fort|Ruins|Reserve|Sanctuary|Observatory|Observatory|Planetarium|Botanical|Zoo|Aquarium|Beach|Mountain|Lake|River|Valley|District|Quarter|Street|Avenue|Boulevard|Plaza|Stadium|Arena|Monument|Memorial|Statue|Temple|Church|Mosque|Synagogue|Shrine|Fort|Ruins|Reserve|Sanctuary|Observatory|Planetarium|Botanical))',
@@ -42,99 +40,68 @@ class LocationAgent:
                 
                 for match in location_matches:
                     location_name = match.group(1).strip()
-                    
-                    # Skip if we've already processed this location
                     if location_name.lower() in seen_locations:
                         continue
-                    
-                    # Get the sentence containing this location
                     sentence_start = max(0, day.find(location_name) - 100)
                     sentence_end = min(len(day), day.find(location_name) + 100)
                     description = day[sentence_start:sentence_end].strip()
-                    
-                    # Clean up the location name
                     location_name = re.sub(r'^(the|a|an)\s+', '', location_name, flags=re.IGNORECASE)
                     location_name = location_name.strip()
-                    
-                    # Skip if location name is too short or too generic
                     if len(location_name) < 3 or location_name.lower() in ['city', 'town', 'place', 'area', 'region']:
                         continue
-                    
-                    # Get coordinates for the location
                     try:
-                        # Add the destination city to improve geocoding accuracy
                         destination = os.getenv('DESTINATION', '')
                         search_query = f"{location_name}, {destination}" if destination else location_name
-                        
-                        # Geocode the location
+                        print(f"LocationAgent: Searching for coordinates of '{search_query}'...")
                         geocode_result = self.gmaps.geocode(search_query)
-                        
                         if geocode_result:
-                            # Verify the result is in the correct city
                             formatted_address = geocode_result[0]['formatted_address']
                             if destination and destination.lower() not in formatted_address.lower():
-                                print(f"Skipping {location_name} - not in {destination}")
+                                print(f"LocationAgent: Skipping {location_name} – not in {destination} (address: {formatted_address})")
                                 continue
-                                
-                            location = Location(
-                                name=location_name,
-                                description=description,
-                                lat=geocode_result[0]['geometry']['location']['lat'],
-                                lng=geocode_result[0]['geometry']['location']['lng']
-                            )
+                            lat = geocode_result[0]['geometry']['location']['lat']
+                            lng = geocode_result[0]['geometry']['location']['lng']
+                            print(f"LocationAgent: Found coordinates for '{location_name}': (lat, lng) = ({lat}, {lng})")
+                            location = Location(name=location_name, description=description, lat=lat, lng=lng)
                             locations.append(location)
                             seen_locations.add(location_name.lower())
-                            
+                        else:
+                            print(f"LocationAgent: No coordinates found for '{search_query}'")
                     except Exception as e:
-                        print(f"Error geocoding {location_name}: {str(e)}")
+                        print(f"LocationAgent: Error searching for '{location_name}': {e}")
                         continue
-
+        print(f"LocationAgent: Extraction complete. Total locations extracted: {len(locations)}")
         return locations
 
     def enrich_location_data(self, location: Location) -> Location:
-        """Enrich location data with additional information."""
+        print(f"LocationAgent: Enriching location data for '{location.name}' (lat, lng) = ({location.lat}, {location.lng})")
         try:
-            # Search for the location using Places API
-            places_result = self.gmaps.places(
-                location.name,
-                location=f"{location.lat},{location.lng}",
-                radius=1000
-            )
-
+            places_result = self.gmaps.places(location.name, location=f"{location.lat},{location.lng}", radius=1000)
             if places_result.get('results'):
                 place = places_result['results'][0]
-                
-                # Get place details
-                place_details = self.gmaps.place(
-                    place['place_id'],
-                    fields=['name', 'photos', 'formatted_address', 'rating']
-                )
-
-                # Update location with additional data
+                place_details = self.gmaps.place(place['place_id'], fields=['name', 'photos', 'formatted_address', 'rating'])
                 if 'photos' in place_details['result']:
                     photo_ref = place_details['result']['photos'][0]['photo_reference']
                     location.image = f"https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference={photo_ref}&key={os.getenv('GOOGLE_MAPS_API_KEY')}"
-
+                    print(f"LocationAgent: Photo fetched for '{location.name}'.")
+            else:
+                print(f"LocationAgent: No photo found for '{location.name}'.")
         except Exception as e:
-            print(f"Error enriching location data for {location.name}: {str(e)}")
-
+            print(f"LocationAgent: Error enriching '{location.name}': {e}")
         return location
 
     def process_itinerary(self, itinerary: str) -> List[Dict]:
-        """Process the itinerary and return enriched location data."""
-        # Extract locations
+        print("LocationAgent: Starting to parse itinerary text...")
         locations = self.extract_locations_from_itinerary(itinerary)
-        
-        # Enrich location data
         enriched_locations = []
-        for location in locations:
-            enriched_location = self.enrich_location_data(location)
+        for loc in locations:
+            enriched_loc = self.enrich_location_data(loc)
             enriched_locations.append({
-                'name': enriched_location.name,
-                'description': enriched_location.description,
-                'lat': enriched_location.lat,
-                'lng': enriched_location.lng,
-                'image': enriched_location.image
+                'name': enriched_loc.name,
+                'description': enriched_loc.description,
+                'lat': enriched_loc.lat,
+                'lng': enriched_loc.lng,
+                'image': enriched_loc.image
             })
-
+        print(f"LocationAgent: Finished parsing and enriching locations. Returning {len(enriched_locations)} locations.")
         return enriched_locations 

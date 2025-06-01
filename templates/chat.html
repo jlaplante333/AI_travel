@@ -505,44 +505,118 @@
                 const destination = answers['Hi! I\'m your AI travel assistant. I\'d love to help plan your perfect trip! Where would you like to go?'];
                 const duration = answers['Great choice! How long would you like to stay there?'];
                 const timing = answers['Perfect! When are you planning to take this trip?'];
-                const travelStyle = answers['I\'d love to know your travel style! Which best describes your preferences?'];
+                const travelStyleAnswer = answers['I\'d love to know your travel style! Which best describes your preferences?'];
                 const dietary = answers['Do you have any dietary requirements or allergies I should know about?'];
                 const companions = answers['Will you be traveling solo, or will you have company?'];
                 const experiences = answers['Last question! What kind of experiences do you enjoy most? Are you into city life, countryside adventures, beach relaxation, jungle exploration, or maybe a mix of these?'];
 
                 // Store destination in sessionStorage for map use
                 sessionStorage.setItem('destination', destination);
+                console.log('[CHAT_LOGIC] Destination stored in sessionStorage:', destination);
+
+                // ---- NEW: Set travelStyle in sessionStorage ----
+                let simpleTravelStyleKey = 'balanced budget'; // Default style
+                if (travelStyleAnswer) {
+                    const travelStyleLower = travelStyleAnswer.toLowerCase();
+                    if (travelStyleLower.includes('luxury')) {
+                        simpleTravelStyleKey = 'luxury travel';
+                    } else if (travelStyleLower.includes('budget traveler')) {
+                        simpleTravelStyleKey = 'balanced budget';
+                    } else if (travelStyleLower.includes('balanced')) {
+                        simpleTravelStyleKey = 'balanced budget';
+                    } else if (travelStyleLower.includes('adventure')) {
+                        simpleTravelStyleKey = 'balanced budget'; // Default for adventure
+                    }
+                    // If none of the keywords match, it will use the default 'balanced budget'
+                }
+                sessionStorage.setItem('travelStyle', simpleTravelStyleKey);
+                console.log('[CHAT_LOGIC] travelStyle stored in sessionStorage:', simpleTravelStyleKey);
+                // ---- END NEW ----
 
                 const searchQuery = `${destination} for ${duration} ${timing}`;
                 addMessage("Perfect! I have all the information I need. Let me prepare your personalized travel plan...");
                 showTypingIndicator();
 
-                // Create a detailed prompt with all collected information
                 const detailedPrompt = `Create a detailed itinerary for a trip to ${destination} for ${duration} ${timing}. 
-                Travel Style: ${travelStyle}
+                Travel Style: ${travelStyleAnswer}
                 Dietary Requirements: ${dietary}
                 Travel Companions: ${companions}
                 Preferred Experiences: ${experiences}
                 Please provide a day-by-day itinerary with specific recommendations, including food options that accommodate any dietary requirements.`;
+                console.log('[CHAT_LOGIC] Detailed prompt for itinerary:', detailedPrompt);
 
                 try {
-                    // Send the prompt to generate itinerary
-                    const response = await fetch('/generate_itinerary', {
+                    console.log('[CHAT_LOGIC] Fetching itinerary...');
+                    const itineraryResponse = await fetch('/generate_itinerary', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ prompt: detailedPrompt })
                     });
                     
-                    const data = await response.json();
-                    if (data.itinerary) {
-                        sessionStorage.setItem('generatedItinerary', data.itinerary);
+                    if (!itineraryResponse.ok) {
+                        const errorData = await itineraryResponse.json().catch(() => ({ error: "Failed to parse itinerary error response"}));
+                        console.error('[CHAT_LOGIC] Itinerary generation failed:', errorData);
+                        addMessage("I encountered an issue generating your itinerary. Please try again.");
+                        throw new Error(errorData.error || `Itinerary generation failed: ${itineraryResponse.statusText}`);
+                    }
+
+                    const itineraryData = await itineraryResponse.json();
+                    console.log('[CHAT_LOGIC] Itinerary data received:', itineraryData);
+
+                    if (itineraryData.itinerary) {
+                        sessionStorage.setItem('generatedItinerary', itineraryData.itinerary);
+                        console.log('[CHAT_LOGIC] Itinerary stored in sessionStorage.');
+
+                        // ---- NEW: Extract locations ----
+                        addMessage("Extracting key locations for your map...");
+                        showTypingIndicator(); // Show indicator for location extraction
+                        console.log('[CHAT_LOGIC] Fetching locations for the map...');
+                        try {
+                            const locationsResponse = await fetch('/extract_locations', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ 
+                                    itinerary: itineraryData.itinerary, 
+                                    location: destination // Use the already determined destination as base_location
+                                })
+                            });
+
+                            if (!locationsResponse.ok) {
+                                const locErrorData = await locationsResponse.json().catch(() => ({error: "Failed to parse location extraction error"}));
+                                console.error('[CHAT_LOGIC] Location extraction failed:', locErrorData);
+                                addMessage("I had trouble pinpointing locations for your map, but your itinerary is ready!");
+                                // Proceed without locations if this step fails
+                            } else {
+                                const locationsData = await locationsResponse.json();
+                                console.log('[CHAT_LOGIC] Locations data received:', locationsData);
+                                if (locationsData.locations && locationsData.locations.length > 0) {
+                                    sessionStorage.setItem('generatedLocations', JSON.stringify(locationsData.locations));
+                                    console.log('[CHAT_LOGIC] Locations stored in sessionStorage.');
+                                    addMessage("Map locations are ready!");
+                                } else {
+                                    console.log('[CHAT_LOGIC] No locations extracted or returned empty.');
+                                    addMessage("Couldn't find specific points for the map, but your itinerary is set!");
+                                }
+                            }
+                        } catch (locError) {
+                            console.error('[CHAT_LOGIC] Error during location extraction fetch:', locError);
+                            addMessage("An error occurred while preparing map locations.");
+                            // Proceed without locations
+                        }
+                        // ---- END NEW: Extract locations ----
+
+                    } else {
+                        console.error('[CHAT_LOGIC] No itinerary content in response.');
+                        addMessage("It seems I couldn't generate the itinerary content. Please try again.");
                     }
                 } catch (error) {
-                    console.error('Error generating itinerary:', error);
+                    console.error('[CHAT_LOGIC] Main error generating itinerary or locations:', error);
+                    addMessage("I hit a snag preparing your trip details. Please try starting over.");
+                } finally {
+                    hideTypingIndicator();
+                    console.log('[CHAT_LOGIC] Redirecting to /itinerary page.');
+                    window.location.href = '/itinerary';
                 }
-
-                hideTypingIndicator();
-                window.location.href = '/itinerary';  // Redirect to the itinerary page
             }
         }
 

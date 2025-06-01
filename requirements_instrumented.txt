@@ -1,0 +1,13 @@
+Flask
+flask-socketio
+ollama
+requests
+google-cloud-texttospeech
+googlemaps
+ffmpeg-python
+moviepy
+agno
+openai
+rich
+lumaai
+python-dotenv

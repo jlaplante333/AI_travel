@@ -1,19 +1,33 @@
 # 🌍 AI Travel Agent
 
-An interactive AI-powered travel planning assistant that generates personalized itineraries, AI voiceovers, destination images, and cinematic videos — all from a single prompt.
+## Application:
+
+An interactive AI-powered travel planning assistant that generates personalized itineraries, AI voiceovers, destination images, and cinematic videos — all from a quick chat with our AI travel agent specialist.
+
 
 ![Screenshot 2025-02-16 161217](https://github.com/user-attachments/assets/8575e242-3413-446d-b74d-74c2ea75ba37)
 
+
+## Evals & Traces done with FACTORY AI
+
+
+![image](https://github.com/user-attachments/assets/bb9a4376-1c74-4f4f-8cf7-bc7517383b52)
+
+![image](https://github.com/user-attachments/assets/49303fc0-b9a9-439c-aee3-728c80e16641)
+
+![image](https://github.com/user-attachments/assets/79963596-4a3b-4d8d-a44a-83e2ec1e8b8d)
 
 ---
 
 ## ✨ Features
 
-- 🗺️ **AI Itinerary Generator** – Custom travel plans using LLaMA 3 via Ollama.
+- 🗺️ **AI Itinerary Generator** – Custom travel plans using LLaMA 3 via Ollama. (Changed this to Mistral for performance reasons.)
 - 🔊 **Voiceover Creation** – Google TTS for immersive travel narration.
 - 🖼️ **Image Generation** – Beautiful visuals using DALL·E-style image tools.
 - 🎞️ **Video Generator** – Generate short cinematic travel videos using LumaAI.
 - 🤖 **Chat Agent Ready** – Easily extendable with LangChain Agents for booking, weather, etc.
+- Evals done with FACTORY AI (See screenshots)
+- Used both local models (Mistral,) and LLMs behind APIs (Claude, OpenAI, Gemini 2.5 etc) and Google Maps API.
 
 ---
 
@@ -27,7 +41,7 @@ An interactive AI-powered travel planning assistant that generates personalized 
 ---
 
 ## 📁 Project Structure
-
+(This has changed a lot throughout the hackathon, there are now many more files for evals, the chat page, etc.)
 ```bash
 AI-Travel-Agent/
 │
@@ -111,7 +125,8 @@ AI-Travel-Agent/
 
 ## 👤 Author
 
-- **Jean-Laurent Plante**
+- **Jonathan Laplante**
+- **Ananta Verma**
 - [GitHub](https://github.com/jlaplante333)
 
 ---
