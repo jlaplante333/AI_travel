@@ -1,11 +1,11 @@
-from flask import Flask, render_template, request, jsonify, send_file
+from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for
 import os
 import ollama
 import requests
 from google.cloud import texttospeech
-from load_config import load_config
+import googlemaps
 import ffmpeg
-from moviepy import VideoFileClip, concatenate_videoclips
+from moviepy.editor import VideoFileClip, concatenate_videoclips
 from agno.agent import Agent, RunResponse
 from agno.models.openai import OpenAIChat
 from agno.tools.dalle import DalleTools
@@ -13,74 +13,155 @@ from agno.utils.common import dataclass_to_dict
 from rich.pretty import pprint
 from lumaai import LumaAI
 import time
+from functools import lru_cache
+import hashlib
+import json
+import re
+from typing import List, Dict
+from dotenv import load_dotenv
+from location_agent import LocationAgent
 
-def load_config():
-    config_path = "config.txt"  # Or .env, secrets.env, etc.
+# Load environment variables
+load_dotenv()
 
-    if not os.path.exists(config_path):
-        print(f"⚠️ Config file not found: {config_path}")
-        return
-
-    with open(config_path, "r") as file:
-        for line in file:
-            line = line.strip()
-            if not line or "=" not in line:  # Ignore empty/malformed lines
-                continue
-            key, value = line.split("=", 1)
-            os.environ[key] = value  # Set as environment variable
-
-# Load config when script runs
-load_config()
-
-#Retrieve API Keys
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "path_to_your_tts.json"
+# Retrieve API Keys from environment variables
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 LUMA_API_KEY = os.getenv("LUMA_API_KEY")
+GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY')
 
-# ✅ Initialize Flask App
+if not GOOGLE_MAPS_API_KEY:
+    raise ValueError("GOOGLE_MAPS_API_KEY not found in environment variables")
+
+print(f"🔑 Google Maps API Key loaded: {'Yes' if GOOGLE_MAPS_API_KEY else 'No'}")
+print(f"🔑 API Key length: {len(GOOGLE_MAPS_API_KEY) if GOOGLE_MAPS_API_KEY else 0}")
+print(f"🔑 API Key first 10 chars: {GOOGLE_MAPS_API_KEY[:10] if GOOGLE_MAPS_API_KEY else 'None'}")
+
+# Initialize Flask App
 app = Flask(__name__, static_folder="static", template_folder="templates")
 
+# Initialize Google Maps client
+try:
+    gmaps = googlemaps.Client(key=GOOGLE_MAPS_API_KEY)
+    test_result = gmaps.geocode('Paris, France')
+    if test_result:
+        print("✅ Google Maps client initialized and tested successfully")
+        print(f"✅ Test geocoding successful: {test_result[0]['formatted_address']}")
+    else:
+        print("⚠️ Google Maps client initialized but test geocoding returned no results")
+except Exception as e:
+    print(f"❌ Error initializing Google Maps client: {str(e)}")
+    print(f"❌ Error type: {type(e).__name__}")
+    gmaps = None
 
-# ------------------------------------------------------------------
-# 4) Existing "image_agent" for generating images (agno)
-# ------------------------------------------------------------------
+# Initialize agents
 image_agent = Agent(
-    model=OpenAIChat(id="gpt-4o", api_key=OPENAI_API_KEY),
+    model=OpenAIChat(id="gpt-4", api_key=OPENAI_API_KEY),
     tools=[DalleTools()],
     description="AI agent for generating travel images.",
 )
 
+location_agent = LocationAgent()
+
 # Serve Frontend
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('chat.html', google_maps_api_key=GOOGLE_MAPS_API_KEY)
 
+@app.route('/itinerary')
+def itinerary():
+    return render_template('index.html', google_maps_api_key=GOOGLE_MAPS_API_KEY)
+
+# Add timing metrics
+class TimingMetrics:
+    def __init__(self):
+        self.start_time = None
+        self.end_time = None
+        self.model = None
+    
+    def start(self, model_name):
+        self.start_time = time.time()
+        self.model = model_name
+    
+    def end(self):
+        self.end_time = time.time()
+        return self.end_time - self.start_time
+
+metrics = TimingMetrics()
+
+# Cache size for itineraries (adjust based on your memory constraints)
+ITINERARY_CACHE_SIZE = 100
+
+# Create a dictionary to store cached itineraries
+itinerary_cache = {}
+
+def get_cached_itinerary(cache_key):
+    """Get cached itinerary if it exists."""
+    return itinerary_cache.get(cache_key)
+
+def set_cached_itinerary(cache_key, itinerary_text):
+    """Store itinerary in cache."""
+    if len(itinerary_cache) >= ITINERARY_CACHE_SIZE:
+        # Remove oldest item if cache is full
+        itinerary_cache.pop(next(iter(itinerary_cache)))
+    itinerary_cache[cache_key] = itinerary_text
+
+def generate_cache_key(prompt):
+    """Generate a deterministic cache key from the prompt."""
+    return hashlib.md5(prompt.encode()).hexdigest()
+
+def optimize_prompt(user_prompt):
+    """Optimize the prompt for faster generation."""
+    # Extract key information from the prompt
+    prompt_parts = user_prompt.split()
+    
+    # Create a more structured prompt for faster processing
+    optimized = (
+        f"Create a concise day-by-day itinerary for: {user_prompt}\n"
+        "Format: Day X: [Morning/Afternoon/Evening activities]\n"
+        "Keep descriptions brief but informative.\n"
+        "Include: key attractions, dining, and transportation.\n"
+        "Max 3-4 activities per day."
+    )
+    return optimized
 
 # Generate AI Itinerary using Ollama
 @app.route('/generate_itinerary', methods=['POST'])
 def generate_itinerary():
-    data = request.json
-    user_prompt = data.get("prompt")
-
-    if not user_prompt:
-        return jsonify({"error": "No prompt provided"}), 400
-
-    print(f"🗺 Generating itinerary for: {user_prompt}")
-
     try:
+        data = request.get_json()
+        user_prompt = data.get('prompt', '')
+        
+        if not user_prompt:
+            return jsonify({"error": "No prompt provided"}), 400
+
+        # Extract destination from prompt
+        destination = user_prompt.split(' to ')[1].split(' for')[0].strip() if ' to ' in user_prompt else ''
+        os.environ['DESTINATION'] = destination  # Set destination for location agent
+        
+        print(f"🗺 Generating itinerary for: {user_prompt}")
+        
+        # Generate itinerary using Ollama
         response = ollama.chat(
-            model="llama3",
-            messages=[{"role": "user", "content": f"Create a detailed itinerary for {user_prompt}"}]
+            model="mistral",
+            messages=[{
+                "role": "user", 
+                "content": f"Create a detailed 3-day itinerary for {user_prompt}. Include specific attractions, landmarks, and activities. Format each day with 'Day X:' and list 3-4 activities per day. Make sure to mention specific places to visit."
+            }],
+            options={
+                "temperature": 0.7,
+                "num_predict": 512
+            }
         )
+        
         itinerary_text = response.get("message", {}).get("content", "No itinerary generated.")
-
-        print("Generated Itinerary:", itinerary_text)  # Debugging output
-
-        return jsonify({"itinerary": itinerary_text})
-
+        
+        return jsonify({
+            'itinerary': itinerary_text,
+            'destination': destination
+        })
     except Exception as e:
-        print(f"❌ Ollama API Error: {str(e)}")
-        return jsonify({"error": "Failed to generate itinerary"}), 500
+        print(f"❌ Error generating itinerary: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/generate_images', methods=['POST'])
 def generate_images():
@@ -193,9 +274,89 @@ def generate_voiceover():
         print(f"❌ Google TTS Error: {str(e)}")
         return jsonify({"error": "Failed to generate voiceover"}), 500
 
+def extract_locations_from_itinerary(itinerary_text: str, base_location: str) -> List[Dict]:
+    """Extract location names from itinerary text and get their coordinates."""
+    # Use the AI model to extract location names
+    prompt = f"""
+    Extract all specific location names (attractions, landmarks, restaurants, etc.) from this itinerary.
+    Base location: {base_location}
+    Itinerary:
+    {itinerary_text}
+    
+    Return only a JSON array of location names, like:
+    ["Location 1", "Location 2", "Location 3"]
+    """
+    
+    try:
+        response = ollama.chat(
+            model="mistral",
+            messages=[{"role": "user", "content": prompt}],
+            options={"temperature": 0.3}
+        )
+        
+        # Extract JSON array from response
+        content = response.get("message", {}).get("content", "[]")
+        # Find JSON array in the response
+        json_match = re.search(r'\[.*\]', content)
+        if json_match:
+            locations = json.loads(json_match.group())
+        else:
+            locations = []
+        
+        # Get coordinates for each location
+        location_data = []
+        
+        for location in locations:
+            try:
+                # Add base location to search query for better accuracy
+                search_query = f"{location}, {base_location}"
+                result = gmaps.geocode(search_query)
+                
+                if result:
+                    location_data.append({
+                        "name": location,
+                        "lat": result[0]['geometry']['location']['lat'],
+                        "lng": result[0]['geometry']['location']['lng'],
+                        "description": f"Visit {location} during your trip to {base_location}",
+                        # We'll get the image URL from the image generation later
+                        "image": None
+                    })
+            except Exception as e:
+                print(f"Error geocoding {location}: {str(e)}")
+                continue
+        
+        return location_data
+    
+    except Exception as e:
+        print(f"Error extracting locations: {str(e)}")
+        return []
 
+@app.route('/extract_locations', methods=['POST'])
+def extract_locations():
+    try:
+        data = request.get_json()
+        itinerary = data.get('itinerary', '')
+        
+        # Use the location agent to process the itinerary
+        locations = location_agent.process_itinerary(itinerary)
+        
+        return jsonify({
+            'locations': locations
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 # Run Flask App
 if __name__ == '__main__':
+    # Test Google Maps client
+    try:
+        test_result = gmaps.geocode('Paris, France')
+        if test_result:
+            print("✅ Google Maps client initialized and tested successfully")
+            print("✅ Test geocoding successful: Paris, France")
+    except Exception as e:
+        print(f"❌ Google Maps client test failed: {str(e)}")
+        raise
+
     app.run(debug=True)
 

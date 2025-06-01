@@ -18,15 +18,416 @@
     <!-- Search Section -->
     <div class="search-container">
         <div class="search-wrapper">
-            <input type="text" id="tripInput" class="search-box" placeholder="Plan your dream trip...">
+            <input type="text" id="tripInput" class="search-box" placeholder="Plan your dream trip..." value="Edit you itinerary">
             <button id="planTripBtn" class="search-button">
-                Go <span class="airplane-icon">✈️</span>
+                <span id="buttonText">Go</span> <span class="airplane-icon">✈️</span>
+                <span id="loadingSpinner" class="spinner" style="display: none;">
+                    <span class="spinner-dot"></span>
+                    <span class="spinner-dot"></span>
+                    <span class="spinner-dot"></span>
+                </span>
             </button>
+        </div>
+        <!-- Add progress indicator -->
+        <div id="generationProgress" class="progress-container" style="display: none;">
+            <div class="progress-steps">
+                <div class="step active" id="stepItinerary">
+                    <span class="step-icon">🗺️</span>
+                    <span class="step-text">Itinerary</span>
+                </div>
+                <div class="step" id="stepImages">
+                    <span class="step-icon">🖼️</span>
+                    <span class="step-text">Images</span>
+                </div>
+                <div class="step" id="stepVideo">
+                    <span class="step-icon">🎥</span>
+                    <span class="step-text">Video</span>
+                </div>
+            </div>
         </div>
     </div>
 
+    <style>
+        /* Add these styles to your existing CSS */
+        .search-button {
+            position: relative;
+            min-width: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .search-button:disabled {
+            background: #e0e0e0;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .spinner {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .spinner-dot {
+            width: 6px;
+            height: 6px;
+            background: #2196f3;
+            border-radius: 50%;
+            animation: bounce 0.5s infinite alternate;
+        }
+
+        .spinner-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .spinner-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-4px); }
+        }
+
+        .search-box:disabled {
+            background: #f5f5f5;
+            cursor: not-allowed;
+        }
+
+        /* Add these styles */
+        .progress-container {
+            margin-top: 20px;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+
+        .progress-steps::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #e0e0e0;
+            z-index: 1;
+        }
+
+        .step {
+            position: relative;
+            z-index: 2;
+            background: white;
+            padding: 10px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .step.active {
+            background: #2196f3;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .step.completed {
+            background: #4caf50;
+            color: white;
+        }
+
+        .step-icon {
+            font-size: 1.5rem;
+        }
+
+        .step-text {
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+
+        /* Replace the existing loading animation styles with these new ones */
+        @keyframes shimmer {
+            0% { 
+                background-position: -200% 0;
+                opacity: 0.5;
+            }
+            50% {
+                opacity: 0.8;
+            }
+            100% { 
+                background-position: 200% 0;
+                opacity: 0.5;
+            }
+        }
+
+        .itinerary-loading {
+            background: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0%,
+                rgba(255, 255, 255, 0.8) 50%,
+                rgba(255, 255, 255, 0) 100%
+            );
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+            border-radius: 8px;
+            height: 24px;
+            margin: 15px 0;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .itinerary-loading::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(
+                90deg,
+                #f8f9fa 0%,
+                #e9ecef 50%,
+                #f8f9fa 100%
+            );
+            border-radius: 8px;
+            z-index: -1;
+        }
+
+        .itinerary-loading.day {
+            height: 32px;
+            background: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0%,
+                rgba(255, 255, 255, 0.9) 50%,
+                rgba(255, 255, 255, 0) 100%
+            );
+        }
+
+        .itinerary-loading.day::before {
+            background: linear-gradient(
+                90deg,
+                #e3f2fd 0%,
+                #bbdefb 50%,
+                #e3f2fd 100%
+            );
+        }
+
+        .itinerary-loading.activity {
+            height: 20px;
+            margin: 10px 0;
+            background: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0%,
+                rgba(255, 255, 255, 0.7) 50%,
+                rgba(255, 255, 255, 0) 100%
+            );
+        }
+
+        .itinerary-loading.activity::before {
+            background: linear-gradient(
+                90deg,
+                #f5f5f5 0%,
+                #eeeeee 50%,
+                #f5f5f5 100%
+            );
+        }
+
+        /* Add a subtle pulse animation for the loading container */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        .itinerary-box.loading {
+            animation: pulse 2s infinite ease-in-out;
+        }
+
+        /* Add to your existing styles */
+        .itinerary-metadata {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .metadata-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .metadata-item.cached {
+            color: #28a745;
+        }
+
+        .metadata-item.time {
+            color: #007bff;
+        }
+
+        .metadata-item.model {
+            color: #6c757d;
+        }
+
+        /* Add to your existing styles */
+        .map-container {
+            height: 500px;  /* Increased height for better visibility */
+            width: 100%;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin: 20px 0;
+            position: relative;  /* For absolute positioning of overlay */
+        }
+
+        .custom-info-window {
+            padding: 15px;
+            max-width: 300px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        .custom-info-window:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .custom-info-window img {
+            width: 100%;
+            height: 180px;  /* Increased height for better image visibility */
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .custom-info-window h3 {
+            margin: 0 0 8px 0;
+            font-size: 1.3rem;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .custom-info-window p {
+            margin: 0;
+            font-size: 1rem;
+            color: #34495e;
+            line-height: 1.5;
+        }
+
+        /* Add styles for marker hover effect */
+        .marker-hover {
+            transform: scale(1.1);
+            transition: transform 0.2s ease;
+        }
+
+        /* Add a loading overlay for the map */
+        .map-loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .map-loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .marker-cluster {
+            background-color: #2196f3;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .info-window-content {
+            padding: 10px;
+            max-width: 300px;
+        }
+
+        .info-window-content h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .info-window-content p {
+            margin: 0 0 10px 0;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .info-window-image {
+            margin-top: 10px;
+        }
+
+        .info-window-image img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .gm-style .gm-style-iw-c {
+            padding: 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 7px 1px rgba(0,0,0,0.3);
+        }
+
+        .gm-style .gm-style-iw-d {
+            overflow: hidden !important;
+        }
+
+        .gm-style-iw button {
+            display: none !important;
+        }
+    </style>
+
     <!-- Results Section -->
     <div class="container text-center mt-5">
+        <!-- Add Map Section before Itinerary -->
+        <div class="result-box">
+            <h2>Destination Map</h2>
+            <div id="map" class="map-container"></div>
+        </div>
 
         <!-- AI-Generated Itinerary -->
         <div class="itinerary-container">
@@ -46,6 +447,13 @@
                 </button>
             </h2>
             <div class="itinerary-box">
+                <div id="itineraryMetadata" style="
+                    font-size: 0.9rem;
+                    color: #666;
+                    margin-bottom: 10px;
+                    padding: 5px;
+                    border-bottom: 1px solid #eee;
+                "></div>
                 <p id="itineraryText">No itinerary generated yet.</p>
             </div>
         </div>
@@ -76,6 +484,166 @@
 
     <!-- JavaScript -->
     <script>
+    // Add this at the beginning of your script section
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM Content Loaded');
+        console.log('Google Maps API Key available:', '{{ google_maps_api_key }}' !== '');
+        
+        // Initialize map immediately when the page loads
+        if (typeof google !== 'undefined' && google.maps) {
+            console.log('Google Maps API is loaded');
+            initMap();
+        } else {
+            console.log('Loading Google Maps API...');
+            // Load Google Maps API
+            const script = document.createElement('script');
+            script.src = `https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&callback=initMap`;
+            script.async = true;
+            script.defer = true;
+            script.onerror = handleMapError;
+            document.head.appendChild(script);
+        }
+    });
+
+    function initMap() {
+        console.log('Initializing map...');
+        const mapElement = document.getElementById('map');
+        if (!mapElement) {
+            console.error('Map element not found');
+            return;
+        }
+
+        // Show loading overlay
+        const loadingOverlay = document.createElement('div');
+        loadingOverlay.className = 'map-loading-overlay';
+        loadingOverlay.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>';
+        mapElement.appendChild(loadingOverlay);
+
+        try {
+            // Get destination from session storage
+            const destination = sessionStorage.getItem('destination');
+            console.log('Destination from session storage:', destination);
+
+            if (!destination) {
+                throw new Error('No destination found in session storage');
+            }
+
+            // Initialize the map
+            const map = new google.maps.Map(mapElement, {
+                zoom: 12,
+                mapTypeControl: true,
+                streetViewControl: true,
+                fullscreenControl: true,
+                zoomControl: true,
+                styles: [
+                    {
+                        featureType: "poi",
+                        elementType: "labels",
+                        stylers: [{ visibility: "off" }]
+                    }
+                ]
+            });
+
+            // Create geocoder
+            const geocoder = new google.maps.Geocoder();
+            
+            // Geocode the destination
+            geocoder.geocode({ address: destination }, (results, status) => {
+                if (status === 'OK' && results[0]) {
+                    const location = results[0].geometry.location;
+                    map.setCenter(location);
+                    
+                    // Add a marker for the destination
+                    new google.maps.Marker({
+                        position: location,
+                        map: map,
+                        title: destination,
+                        icon: {
+                            path: google.maps.SymbolPath.CIRCLE,
+                            scale: 10,
+                            fillColor: "#FF0000",
+                            fillOpacity: 1,
+                            strokeColor: "#FFFFFF",
+                            strokeWeight: 2
+                        }
+                    });
+
+                    // Remove loading overlay
+                    loadingOverlay.remove();
+                } else {
+                    console.error('Geocoding failed:', status);
+                    showMapError(`Could not load the map for ${destination}. Please try again later.`);
+                    loadingOverlay.remove();
+                }
+            });
+
+        } catch (error) {
+            console.error('Map initialization error:', error);
+            showMapError('Failed to initialize the map. Please try again later.');
+            loadingOverlay.remove();
+        }
+    }
+
+    function handleMapError() {
+        console.error('Google Maps API failed to load');
+        const mapElement = document.getElementById('map');
+        if (mapElement) {
+            mapElement.innerHTML = `
+                <div style="padding: 20px; text-align: center; color: #666;">
+                    <p>Failed to load Google Maps. Please check your internet connection and try again.</p>
+                    <p>Make sure you have a valid Google Maps API key in your configuration.</p>
+                </div>
+            `;
+        }
+    }
+
+    // Add this at the beginning of your script section
+    const tripInput = document.getElementById('tripInput');
+    const planTripBtn = document.getElementById('planTripBtn');
+    const buttonText = document.getElementById('buttonText');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    let isProcessing = false;
+
+    function setLoadingState(loading) {
+        isProcessing = loading;
+        tripInput.disabled = loading;
+        planTripBtn.disabled = loading;
+        buttonText.style.display = loading ? 'none' : 'inline';
+        loadingSpinner.style.display = loading ? 'inline-flex' : 'none';
+    }
+
+    // Check for generated itinerary in sessionStorage
+    const generatedItinerary = sessionStorage.getItem('generatedItinerary');
+    if (generatedItinerary) {
+        // Format and display the itinerary
+        let formattedItinerary = generatedItinerary
+            .replace(/\*/g, '') // Remove asterisks
+            .replace(/(Day \d+)/g, "<strong>$1</strong>") // Make day headings bold
+            .split("\n")
+            .map(paragraph => `<p>${paragraph.trim()}</p>`)
+            .join("");
+        
+        document.getElementById("itineraryText").innerHTML = formattedItinerary;
+        
+        // Generate voiceover for the itinerary
+        fetch('/generate_voiceover', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: generatedItinerary.replace(/<\/?[^>]+(>|$)/g, "") })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.audio_url) {
+                let audioElement = document.getElementById("aiAudio");
+                audioElement.src = data.audio_url;
+                audioElement.load();
+            }
+        });
+        
+        // Clear the sessionStorage after using it
+        sessionStorage.removeItem('generatedItinerary');
+    }
+
     // Function to toggle voiceover playback
     function toggleVoiceover() {
         let audioElement = document.getElementById("aiAudio");
@@ -101,109 +669,363 @@
     // Ensure the button always works
     document.getElementById("playAudio").addEventListener("click", toggleVoiceover);
 
-    document.getElementById("planTripBtn").addEventListener("click", function () {
-    let userPrompt = document.getElementById("tripInput").value;
-
-    if (!userPrompt) {
-        alert("Please enter your trip details.");
-        return;
+    function updateProgress(step, status) {
+        const stepElement = document.getElementById(`step${step}`);
+        if (status === 'active') {
+            stepElement.classList.add('active');
+            stepElement.classList.remove('completed');
+        } else if (status === 'completed') {
+            stepElement.classList.remove('active');
+            stepElement.classList.add('completed');
+        }
     }
 
-    // ✅ Fetch AI Itinerary First
-       fetch('/generate_itinerary', {
-           method: 'POST',
-           headers: { 'Content-Type': 'application/json' },
-           body: JSON.stringify({ prompt: userPrompt })
-       })
-       .then(response => response.json())
-       .then(data => {
-           let itineraryText = data.itinerary;
+    function showLoadingItinerary() {
+        const itineraryBox = document.getElementById("itineraryText");
+        itineraryBox.parentElement.classList.add('loading');
+        
+        // Create a more structured loading state
+        const loadingContent = `
+            <div class="itinerary-loading day"></div>
+            <div class="itinerary-loading activity"></div>
+            <div class="itinerary-loading activity"></div>
+            <div class="itinerary-loading activity"></div>
+            <div class="itinerary-loading day"></div>
+            <div class="itinerary-loading activity"></div>
+            <div class="itinerary-loading activity"></div>
+            <div class="itinerary-loading activity"></div>
+            <div class="itinerary-loading day"></div>
+            <div class="itinerary-loading activity"></div>
+            <div class="itinerary-loading activity"></div>
+            <div class="itinerary-loading activity"></div>
+        `;
+        
+        itineraryBox.innerHTML = loadingContent;
+    }
 
+    function updateItineraryMetadata(data) {
+        const metadataDiv = document.getElementById('itineraryMetadata');
+        const cached = data.cached ? '✅ Cached' : '🔄 Fresh';
+        const time = data.generation_time ? `⏱️ ${data.generation_time.toFixed(2)}s` : '';
+        const model = data.model ? `🤖 ${data.model}` : '';
+        
+        metadataDiv.innerHTML = `
+            <div class="itinerary-metadata">
+                <span class="metadata-item ${data.cached ? 'cached' : ''}">${cached}</span>
+                ${time ? `<span class="metadata-item time">${time}</span>` : ''}
+                ${model ? `<span class="metadata-item model">${model}</span>` : ''}
+            </div>
+        `;
+    }
 
-           // ✅ Remove asterisks from the displayed text
-           itineraryText = itineraryText.replace(/\*/g, '');
+    // Add these variables at the top of your script section
+    let map;
+    let markers = [];
+    let infoWindows = [];
+    let currentInfoWindow = null;
 
+    function createCustomInfoWindow(marker, location) {
+        const content = `
+            <div class="custom-info-window">
+                <img src="${location.image || '/static/placeholder.jpg'}" alt="${location.name}" onerror="this.src='/static/placeholder.jpg'">
+                <h3>${location.name}</h3>
+                <p>${location.description || `Visit ${location.name} during your trip`}</p>
+            </div>
+        `;
 
-           // ✅ Make section headings bold
-           itineraryText = itineraryText.replace(/(Day \d+)/g, "<strong>$1</strong>");
-
-
-           // ✅ Ensure proper paragraph formatting
-           itineraryText = itineraryText.split("\n").map(paragraph => `<p>${paragraph.trim()}</p>`).join("");
-
-
-           document.getElementById("itineraryText").innerHTML = itineraryText;
-
-
-           // ✅ Generate Voiceover (Send clean text without HTML tags)
-           let cleanItineraryText = itineraryText.replace(/<\/?[^>]+(>|$)/g, ""); // Remove HTML tags for voiceover
-
-
-           return fetch('/generate_voiceover', {
-               method: 'POST',
-               headers: { 'Content-Type': 'application/json' },
-               body: JSON.stringify({ text: cleanItineraryText }) // Send clean text
-           });
-       })
-       .then(response => response.json())
-       .then(data => {
-           let audioElement = document.getElementById("aiAudio");
-
-
-           if (data.audio_url) {
-               let newAudio = new Audio(data.audio_url);
-               newAudio.onloadeddata = () => {
-                   audioElement.src = data.audio_url;
-                   audioElement.load();
-               };
-           }
-       });
-
-
-    // ✅ Fetch AI Images
-    fetch('/generate_images', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ location: userPrompt })
-    })
-    .then(response => response.json())
-    .then(data => {
-        let imageGallery = document.getElementById("imageGallery");
-        imageGallery.innerHTML = ""; // Clear previous images
-        let imagesToShow = data.image_urls.slice(-6); // ✅ Show only last 6 images
-        imagesToShow.forEach(url => {
-            let img = document.createElement("img");
-            img.src = url;
-            img.classList.add("ai-image");
-            imageGallery.appendChild(img);
+        const infoWindow = new google.maps.InfoWindow({
+            content: content,
+            maxWidth: 300,
+            pixelOffset: new google.maps.Size(0, -10)
         });
-    });
 
-    // ✅ Fetch AI Video using Luma AI
-    fetch('/generate_video', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: userPrompt })  // Use trip input as prompt
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log("📽️ Luma API Video Response:", data); // Debug output
+        // Add hover effects
+        marker.addListener('mouseover', () => {
+            marker.setAnimation(google.maps.Animation.BOUNCE);
+            const markerElement = marker.getIcon();
+            if (markerElement) {
+                markerElement.classList.add('marker-hover');
+            }
+        });
 
-        let videoContainer = document.getElementById("videoContainer");
-        let videoElement = document.getElementById("aiVideo");
-        let videoSource = document.getElementById("videoSource");
+        marker.addListener('mouseout', () => {
+            marker.setAnimation(null);
+            const markerElement = marker.getIcon();
+            if (markerElement) {
+                markerElement.classList.remove('marker-hover');
+            }
+        });
 
-        if (data.video_url) {
-            videoSource.src = data.video_url;
-            videoElement.load(); // Refresh the video element
-            videoContainer.style.display = "block"; // Make sure it's visible
-        } else {
-            alert("❌ Failed to generate video from Luma AI.");
+        marker.addListener('click', () => {
+            if (currentInfoWindow) {
+                currentInfoWindow.close();
+            }
+            infoWindow.open(map, marker);
+            currentInfoWindow = infoWindow;
+        });
+
+        return infoWindow;
+    }
+
+    function updateMapWithLocations(locations) {
+        // Remove loading overlay
+        const loadingOverlay = document.querySelector('.map-loading-overlay');
+        if (loadingOverlay) {
+            loadingOverlay.remove();
+        }
+
+        // Clear existing markers
+        markers.forEach(marker => marker.setMap(null));
+        markers = [];
+        infoWindows = [];
+
+        if (!locations || locations.length === 0) return;
+
+        // Create bounds object to fit all markers
+        const bounds = new google.maps.LatLngBounds();
+
+        // Add markers for each location
+        locations.forEach(location => {
+            const marker = new google.maps.Marker({
+                position: { lat: location.lat, lng: location.lng },
+                map: map,
+                title: location.name,
+                animation: google.maps.Animation.DROP,
+                icon: {
+                    url: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png',
+                    scaledSize: new google.maps.Size(32, 32)
+                }
+            });
+
+            const infoWindow = createCustomInfoWindow(marker, location);
+            
+            markers.push(marker);
+            infoWindows.push(infoWindow);
+            bounds.extend(marker.getPosition());
+        });
+
+        // Fit map to show all markers with padding
+        map.fitBounds(bounds);
+
+        // Add some padding to the bounds and limit zoom level
+        const listener = google.maps.event.addListener(map, "idle", function () {
+            const zoom = map.getZoom();
+            if (zoom > 15) {
+                map.setZoom(15);
+            } else if (zoom < 4) {
+                map.setZoom(4);
+            }
+            google.maps.event.removeListener(listener);
+        });
+    }
+
+    // Modify the planTripBtn click handler to handle locations after itinerary generation
+    planTripBtn.addEventListener("click", async function () {
+        if (isProcessing) return;
+
+        let userPrompt = tripInput.value.trim();
+        if (!userPrompt) {
+            alert("Please enter your trip details.");
+            return;
+        }
+
+        setLoadingState(true);
+        document.getElementById('generationProgress').style.display = 'block';
+        updateProgress('Itinerary', 'active');
+        showLoadingItinerary();
+
+        try {
+            // Generate itinerary first
+            const itineraryResponse = await fetch('/generate_itinerary', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: userPrompt })
+            });
+            
+            const itineraryData = await itineraryResponse.json();
+            if (itineraryData.error) throw new Error(itineraryData.error);
+            
+            // Update UI with itinerary first
+            let itineraryText = itineraryData.itinerary;
+            itineraryText = itineraryText.replace(/\*/g, '');
+            itineraryText = itineraryText.replace(/(Day \d+)/g, "<strong>$1</strong>");
+            itineraryText = itineraryText.split("\n").map(paragraph => `<p>${paragraph.trim()}</p>`).join("");
+            document.getElementById("itineraryText").innerHTML = itineraryText;
+            document.getElementById("itineraryText").parentElement.classList.remove('loading');
+            
+            // Update metadata
+            updateItineraryMetadata(itineraryData);
+            updateProgress('Itinerary', 'completed');
+
+            // Now extract and display locations
+            console.log('Extracting locations from itinerary...');
+            const locationsResponse = await fetch('/extract_locations', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    itinerary: itineraryData.itinerary,
+                    location: sessionStorage.getItem('destination') || userPrompt.split(' to ')[1]?.split(' for')[0] || ''
+                })
+            });
+            
+            const locationsData = await locationsResponse.json();
+            if (locationsData.locations && locationsData.locations.length > 0) {
+                console.log('Locations extracted:', locationsData.locations);
+                
+                // Get the map instance
+                const mapElement = document.getElementById('map');
+                const map = new google.maps.Map(mapElement, {
+                    zoom: 12,
+                    mapTypeControl: true,
+                    streetViewControl: true,
+                    fullscreenControl: true,
+                    zoomControl: true
+                });
+
+                // Create bounds to fit all markers
+                const bounds = new google.maps.LatLngBounds();
+                
+                // Add markers for each location
+                locationsData.locations.forEach(location => {
+                    const position = { lat: location.lat, lng: location.lng };
+                    bounds.extend(position);
+                    
+                    // Create custom marker
+                    const marker = new google.maps.Marker({
+                        position: position,
+                        map: map,
+                        title: location.name,
+                        icon: {
+                            path: google.maps.SymbolPath.CIRCLE,
+                            scale: 8,
+                            fillColor: "#4285F4",
+                            fillOpacity: 1,
+                            strokeColor: "#FFFFFF",
+                            strokeWeight: 2
+                        }
+                    });
+
+                    // Create info window content
+                    const content = `
+                        <div class="info-window-content">
+                            <h3>${location.name}</h3>
+                            <p>${location.description}</p>
+                            ${location.image ? `
+                                <div class="info-window-image">
+                                    <img src="${location.image}" alt="${location.name}" 
+                                         onerror="this.src='https://via.placeholder.com/300x200?text=Image+Not+Available'">
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+
+                    // Create info window
+                    const infoWindow = new google.maps.InfoWindow({
+                        content: content,
+                        maxWidth: 300
+                    });
+
+                    // Add hover effects
+                    marker.addListener('mouseover', () => {
+                        infoWindow.open(map, marker);
+                    });
+
+                    marker.addListener('mouseout', () => {
+                        infoWindow.close();
+                    });
+                });
+
+                // Fit map to show all markers
+                map.fitBounds(bounds);
+                
+                // Add padding to bounds and limit zoom
+                const listener = google.maps.event.addListener(map, "idle", function() {
+                    if (map.getZoom() > 15) map.setZoom(15);
+                    google.maps.event.removeListener(listener);
+                });
+            }
+
+            updateProgress('Images', 'active');
+
+            // Generate other content in parallel
+            const [voiceoverData, imageData, videoData] = await Promise.all([
+                fetch('/generate_voiceover', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: itineraryText.replace(/<\/?[^>]+(>|$)/g, "") })
+                }).then(r => r.json()),
+                
+                fetch('/generate_images', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ location: userPrompt })
+                }).then(r => r.json()),
+                
+                fetch('/generate_video', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: userPrompt })
+                }).then(r => r.json())
+            ]);
+
+            // Handle remaining content generation
+            if (voiceoverData.audio_url) {
+                let audioElement = document.getElementById("aiAudio");
+                audioElement.src = voiceoverData.audio_url;
+                audioElement.load();
+            }
+
+            if (imageData.image_urls) {
+                updateProgress('Images', 'completed');
+                updateProgress('Video', 'active');
+                
+                let imageGallery = document.getElementById("imageGallery");
+                imageGallery.innerHTML = "";
+                imageData.image_urls.slice(-6).forEach(url => {
+                    let img = document.createElement("img");
+                    img.src = url;
+                    img.classList.add("ai-image");
+                    imageGallery.appendChild(img);
+                });
+            }
+
+            if (videoData.video_url) {
+                updateProgress('Video', 'completed');
+                let videoElement = document.getElementById("aiVideo");
+                let videoSource = document.getElementById("videoSource");
+                videoSource.src = videoData.video_url;
+                videoElement.load();
+                document.getElementById("videoContainer").style.display = "block";
+            }
+
+        } catch (error) {
+            console.error("Error generating content:", error);
+            document.getElementById("itineraryText").parentElement.classList.remove('loading');
+            document.getElementById("videoContainer").innerHTML = `
+                <div class="alert alert-warning" role="alert" style="margin: 20px;">
+                    <strong>Some content could not be generated</strong>
+                    <p>${error.message}</p>
+                    <p>You can still view the available content for your trip.</p>
+                </div>
+            `;
+        } finally {
+            setLoadingState(false);
+            // Hide progress after a delay
+            setTimeout(() => {
+                document.getElementById('generationProgress').style.display = 'none';
+            }, 2000);
         }
     });
 
-});
-
+    // Prevent form submission on enter while processing
+    tripInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (!isProcessing) {
+                planTripBtn.click();
+            }
+        }
+    });
     </script>
 
 </body>

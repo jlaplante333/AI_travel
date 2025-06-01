@@ -32,15 +32,14 @@ An interactive AI-powered travel planning assistant that generates personalized 
 AI-Travel-Agent/
 │
 ├── app.py                 # Flask backend
-├── config.txt             # API keys and config
-├── load_config.py         # Environment loader
+├── location_agent.py      # Location extraction and processing
+├── static/
+│   ├── css/               # Stylesheets
+│   ├── js/                # JavaScript files
+│   └── images/            # Generated images
 │
 ├── templates/
 │   └── index.html         # Frontend layout
-│
-├── static/
-│   ├── styles.css         # UI styles
-│         
 │
 └── README.md              # You're here!
 ```
@@ -57,8 +56,8 @@ AI-Travel-Agent/
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/Anantaverma20/AI-Travel-Agent.git
-   cd AI-Travel-Agent
+   git clone https://github.com/jlaplante333/AI_travel_world_fair.git
+   cd AI_travel_world_fair
    ```
 
 2. **Create a virtual environment** (optional but recommended):
@@ -74,12 +73,11 @@ AI-Travel-Agent/
    ```
 
 4. **Set up API Keys**:
-   - Edit `config.txt` with your keys:
+   - Create a `.env` file in the project root with your keys:
      ```
-     GOOGLE_TTS_KEY=
-     OLLAMA_MODEL=llama3
-     OPENAI_API_KEY=
-     LUMA_API_KEY=
+     GOOGLE_MAPS_API_KEY=your_google_maps_api_key
+     OPENAI_API_KEY=your_openai_api_key
+     LUMA_API_KEY=your_luma_api_key
      ```
 
 5. **Run the app**:
@@ -113,8 +111,24 @@ AI-Travel-Agent/
 
 ## 👤 Author
 
-- **Ananta Verma**
-- [LinkedIn](https://www.linkedin.com/in/ananta-verma)
-- [Portfolio](https://anantas-portfolio-d0858a.webflow.io/)
+- **Jean-Laurent Plante**
+- [GitHub](https://github.com/jlaplante333)
 
 ---
+
+## 📌 Environment Variables
+
+The following environment variables are required:
+
+- `GOOGLE_MAPS_API_KEY`: Your Google Maps API key for geocoding and maps
+- `OPENAI_API_KEY`: Your OpenAI API key for image generation
+- `LUMA_API_KEY`: Your Luma AI API key for video generation
+
+Create a `.env` file in the project root and add these variables. Never commit the `.env` file to version control.
+
+## 📌 Security Notes
+
+- Never commit API keys or sensitive credentials to version control
+- Keep your `.env` file secure and local
+- Use environment variables for all sensitive configuration
+- Regularly rotate your API keys

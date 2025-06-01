@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Travel Agent - Let's Plan Your Trip</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+                        url('https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2021&q=80');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: #2c3e50;
+        }
+
+        .chat-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chat-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, #2196f3, #00bcd4, #4caf50);
+        }
+
+        .chat-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #e3f2fd;
+        }
+
+        .chat-header h1 {
+            color: #1a237e;
+            font-size: 2rem;
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .chat-header p {
+            color: #546e7a;
+            margin: 0.5rem 0 0;
+            font-size: 1rem;
+        }
+
+        .chat-messages {
+            height: 600px;
+            overflow-y: auto;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid #e0e0e0;
+            scrollbar-width: thin;
+            scrollbar-color: #2196f3 #f5f5f5;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: #f5f5f5;
+            border-radius: 4px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #2196f3;
+            border-radius: 4px;
+        }
+
+        .message {
+            margin-bottom: 1.5rem;
+            padding: 1rem 1.5rem;
+            border-radius: 15px;
+            max-width: 80%;
+            position: relative;
+            animation: messageAppear 0.3s ease-out;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        @keyframes messageAppear {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .bot-message {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            margin-right: auto;
+            border-bottom-left-radius: 5px;
+        }
+
+        .bot-message::before {
+            content: '✈️';
+            position: absolute;
+            left: -30px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.2rem;
+        }
+
+        .user-message {
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+            margin-left: auto;
+            border-bottom-right-radius: 5px;
+        }
+
+        .user-message::after {
+            content: '👤';
+            position: absolute;
+            right: -30px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.2rem;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 1rem;
+            background: white;
+            padding: 1rem;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .input-container input {
+            flex: 1;
+            padding: 1rem 1.5rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .input-container input:focus {
+            outline: none;
+            border-color: #2196f3;
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+        }
+
+        .input-container button {
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, #2196f3, #1976d2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .input-container button:hover {
+            background: linear-gradient(135deg, #1976d2, #1565c0);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.2);
+        }
+
+        .input-container button:disabled {
+            background: #bdbdbd;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 1rem 1.5rem;
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            border-radius: 15px;
+            margin-bottom: 1rem;
+            width: fit-content;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .typing-indicator span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #2196f3;
+            border-radius: 50%;
+            margin-right: 5px;
+            animation: typing 1s infinite;
+        }
+
+        .radio-options {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 1.5rem;
+            border-radius: 15px;
+            margin: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .radio-options label {
+            display: block;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            background: white;
+            border: 2px solid #e0e0e0;
+            cursor: pointer;
+        }
+
+        .radio-options label:hover {
+            background: #e3f2fd;
+            border-color: #2196f3;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(33, 150, 243, 0.1);
+        }
+
+        .radio-options input[type="radio"] {
+            margin-right: 0.8rem;
+            accent-color: #2196f3;
+        }
+
+        .radio-options input[type="radio"]:checked + label {
+            background: #e3f2fd;
+            border-color: #2196f3;
+            box-shadow: 0 2px 8px rgba(33, 150, 243, 0.2);
+        }
+
+        @keyframes typing {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        /* Decorative elements */
+        .travel-icon {
+            position: absolute;
+            opacity: 0.1;
+            pointer-events: none;
+        }
+
+        .travel-icon-1 {
+            top: 20px;
+            right: 20px;
+            font-size: 2rem;
+        }
+
+        .travel-icon-2 {
+            bottom: 20px;
+            left: 20px;
+            font-size: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h1>✈️ Let's Plan Your Perfect Trip! 🌎</h1>
+            <p>Your AI travel assistant is here to help create your dream vacation</p>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <!-- Messages will be added here dynamically -->
+        </div>
+        <div class="typing-indicator" id="typingIndicator">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <div class="input-container">
+            <input type="text" id="userInput" placeholder="Type your answer here..." disabled>
+            <button id="sendButton" disabled>
+                Send <span style="font-size: 1.2rem;">✈️</span>
+            </button>
+        </div>
+        <div class="travel-icon travel-icon-1">🗺️</div>
+        <div class="travel-icon travel-icon-2">🎒</div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                text: "Hi! I'm your AI travel assistant. I'd love to help plan your perfect trip! Where would you like to go?",
+                type: "text"
+            },
+            {
+                text: "Great choice! How long would you like to stay there?",
+                type: "text"
+            },
+            {
+                text: "Perfect! When are you planning to take this trip?",
+                type: "text"
+            },
+            {
+                text: "I'd love to know your travel style! Which best describes your preferences?",
+                type: "radio",
+                options: [
+                    "Budget Traveler - Looking for affordable options and deals",
+                    "Balanced - Mix of budget and some splurges",
+                    "Luxury - Prefer high-end experiences and accommodations",
+                    "Adventure - Focus on unique experiences over comfort"
+                ]
+            },
+            {
+                text: "Do you have any dietary requirements or allergies I should know about?",
+                type: "radio",
+                options: [
+                    "No dietary restrictions",
+                    "Vegetarian",
+                    "Vegan",
+                    "Pescatarian",
+                    "I have allergies (please specify)"
+                ],
+                allowCustomInput: true
+            },
+            {
+                text: "Will you be traveling solo, or will you have company?",
+                type: "text"
+            },
+            {
+                text: "Last question! What kind of experiences do you enjoy most? Are you into city life, countryside adventures, beach relaxation, jungle exploration, or maybe a mix of these?",
+                type: "text"
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        const answers = {};
+        const chatMessages = document.getElementById('chatMessages');
+        const userInput = document.getElementById('userInput');
+        const sendButton = document.getElementById('sendButton');
+        const typingIndicator = document.getElementById('typingIndicator');
+
+        function scrollToBottom() {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Add a MutationObserver to watch for changes in the chat messages
+        const observer = new MutationObserver(scrollToBottom);
+        observer.observe(chatMessages, { 
+            childList: true, 
+            subtree: true 
+        });
+
+        function showTypingIndicator() {
+            typingIndicator.style.display = 'block';
+            scrollToBottom();
+        }
+
+        function hideTypingIndicator() {
+            typingIndicator.style.display = 'none';
+        }
+
+        function addMessage(text, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+            messageDiv.textContent = text;
+            chatMessages.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        function createRadioOptions(options, allowCustomInput = false) {
+            const container = document.createElement('div');
+            container.className = 'radio-options';
+            container.style.marginTop = '1rem';
+            
+            options.forEach(option => {
+                const label = document.createElement('label');
+                label.style.display = 'block';
+                label.style.marginBottom = '0.5rem';
+                label.style.cursor = 'pointer';
+                
+                const radio = document.createElement('input');
+                radio.type = 'radio';
+                radio.name = 'dietaryPreference';
+                radio.value = option;
+                radio.style.marginRight = '0.5rem';
+                
+                label.appendChild(radio);
+                label.appendChild(document.createTextNode(option));
+                container.appendChild(label);
+
+                // If this is the allergies option and custom input is allowed
+                if (allowCustomInput && option.includes('allergies')) {
+                    const customInput = document.createElement('input');
+                    customInput.type = 'text';
+                    customInput.placeholder = 'Please specify your allergies...';
+                    customInput.style.display = 'none';
+                    customInput.style.marginLeft = '2rem';
+                    customInput.style.marginTop = '0.5rem';
+                    customInput.style.padding = '0.5rem';
+                    customInput.style.width = 'calc(100% - 2rem)';
+                    customInput.style.border = '1px solid #e0e0e0';
+                    customInput.style.borderRadius = '4px';
+                    customInput.style.fontFamily = 'inherit';
+                    
+                    radio.addEventListener('change', (e) => {
+                        if (e.target.checked) {
+                            customInput.style.display = 'block';
+                            customInput.focus();
+                            scrollToBottom();
+                        } else {
+                            customInput.style.display = 'none';
+                        }
+                    });
+
+                    label.appendChild(customInput);
+                }
+            });
+            
+            chatMessages.appendChild(container);
+            scrollToBottom();
+            return container;
+        }
+
+        async function askQuestion() {
+            if (currentQuestionIndex < questions.length) {
+                showTypingIndicator();
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                hideTypingIndicator();
+                
+                const question = questions[currentQuestionIndex];
+                addMessage(question.text);
+                
+                if (question.type === 'radio') {
+                    // Clear the input container
+                    const inputContainer = document.querySelector('.input-container');
+                    inputContainer.innerHTML = '';
+                    
+                    // Add radio options
+                    const radioContainer = createRadioOptions(question.options, question.allowCustomInput);
+                    chatMessages.appendChild(radioContainer);
+                    
+                    // Add event listeners to radio buttons
+                    const radioButtons = radioContainer.querySelectorAll('input[type="radio"]');
+                    radioButtons.forEach(radio => {
+                        radio.addEventListener('change', (e) => {
+                            let answer = e.target.value;
+                            
+                            // If this is the allergies option, wait for custom input
+                            if (question.allowCustomInput && answer.includes('allergies')) {
+                                const customInput = e.target.parentElement.querySelector('input[type="text"]');
+                                if (customInput) {
+                                    customInput.addEventListener('blur', () => {
+                                        if (customInput.value.trim()) {
+                                            answer = `Allergies: ${customInput.value.trim()}`;
+                                            handleRadioAnswer(question, answer, radioContainer);
+                                        }
+                                    });
+                                    customInput.addEventListener('keypress', (event) => {
+                                        if (event.key === 'Enter' && customInput.value.trim()) {
+                                            answer = `Allergies: ${customInput.value.trim()}`;
+                                            handleRadioAnswer(question, answer, radioContainer);
+                                        }
+                                    });
+                                }
+                            } else {
+                                handleRadioAnswer(question, answer, radioContainer);
+                            }
+                        });
+                    });
+                } else {
+                    // Recreate the input container for text input
+                    const inputContainer = document.querySelector('.input-container');
+                    inputContainer.innerHTML = `
+                        <input type="text" id="userInput" placeholder="Type your answer here...">
+                        <button id="sendButton">
+                            Send <span style="font-size: 1.2rem;">✈️</span>
+                        </button>
+                    `;
+                    
+                    // Get the new elements and add event listeners
+                    const newUserInput = inputContainer.querySelector('#userInput');
+                    const newSendButton = inputContainer.querySelector('#sendButton');
+                    
+                    newUserInput.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') handleTextAnswer(newUserInput, newSendButton);
+                    });
+                    newSendButton.addEventListener('click', () => handleTextAnswer(newUserInput, newSendButton));
+                    
+                    newUserInput.focus();
+                }
+            } else {
+                // All questions answered, prepare the search query and generate itinerary
+                const destination = answers['Hi! I\'m your AI travel assistant. I\'d love to help plan your perfect trip! Where would you like to go?'];
+                const duration = answers['Great choice! How long would you like to stay there?'];
+                const timing = answers['Perfect! When are you planning to take this trip?'];
+                const travelStyle = answers['I\'d love to know your travel style! Which best describes your preferences?'];
+                const dietary = answers['Do you have any dietary requirements or allergies I should know about?'];
+                const companions = answers['Will you be traveling solo, or will you have company?'];
+                const experiences = answers['Last question! What kind of experiences do you enjoy most? Are you into city life, countryside adventures, beach relaxation, jungle exploration, or maybe a mix of these?'];
+
+                // Store destination in sessionStorage for map use
+                sessionStorage.setItem('destination', destination);
+
+                const searchQuery = `${destination} for ${duration} ${timing}`;
+                addMessage("Perfect! I have all the information I need. Let me prepare your personalized travel plan...");
+                showTypingIndicator();
+
+                // Create a detailed prompt with all collected information
+                const detailedPrompt = `Create a detailed itinerary for a trip to ${destination} for ${duration} ${timing}. 
+                Travel Style: ${travelStyle}
+                Dietary Requirements: ${dietary}
+                Travel Companions: ${companions}
+                Preferred Experiences: ${experiences}
+                Please provide a day-by-day itinerary with specific recommendations, including food options that accommodate any dietary requirements.`;
+
+                try {
+                    // Send the prompt to generate itinerary
+                    const response = await fetch('/generate_itinerary', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ prompt: detailedPrompt })
+                    });
+                    
+                    const data = await response.json();
+                    if (data.itinerary) {
+                        sessionStorage.setItem('generatedItinerary', data.itinerary);
+                    }
+                } catch (error) {
+                    console.error('Error generating itinerary:', error);
+                }
+
+                hideTypingIndicator();
+                window.location.href = '/itinerary';  // Redirect to the itinerary page
+            }
+        }
+
+        function handleRadioAnswer(question, answer, radioContainer) {
+            answers[question.text] = answer;
+            addMessage(answer, true);
+            radioContainer.remove();
+            currentQuestionIndex++;
+            setTimeout(askQuestion, 500);
+        }
+
+        function handleTextAnswer(inputElement, buttonElement) {
+            const answer = inputElement.value.trim();
+            if (!answer) return;
+
+            const currentQuestion = questions[currentQuestionIndex];
+            answers[currentQuestion.text] = answer;
+            addMessage(answer, true);
+
+            inputElement.value = '';
+            inputElement.disabled = true;
+            buttonElement.disabled = true;
+
+            currentQuestionIndex++;
+            setTimeout(askQuestion, 500);
+        }
+
+        // Remove the old event listeners since we're creating new ones dynamically
+        // Start the conversation
+        askQuestion();
+    </script>
+</body>
+</html> 

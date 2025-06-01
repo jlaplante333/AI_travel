@@ -1,6 +1,0 @@
-GOOGLE_TTS_KEY=
-OLLAMA_MODEL=llama3
-OPENAI_API_KEY= your API key
-RUNWAY_API_KEY= your API key
-LUMA_API_KEY= your API key
-GEMINI_API_KEY= your API key

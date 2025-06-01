@@ -1,16 +1,23 @@
-ollama==0.1.7
-Flask==2.3.2
+flask==3.0.2
+python-dotenv==1.0.1
+googlemaps==4.10.0
 requests==2.31.0
 
-# Google Cloud Text-to-Speech
+# Google Cloud Services
 google-cloud-texttospeech==2.14.1
 
 # OpenAI DALL·E for image generation
-openai==1.15.0
+openai==1.82.1
 
 # Optional utility for better debug output
 rich==13.7.1
 
 # AGNO Framework (used for agent + image tools like DalleTools)
 agno==0.1.5
+
+# Video processing
+moviepy==1.0.3
+
+# Luma AI
+lumaai
 
